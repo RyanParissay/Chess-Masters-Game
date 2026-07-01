@@ -6,164 +6,162 @@
 <title>Chess Masters</title>
 <style>
   :root {
-    --bg: #0f1420;
-    --light: #ebecd0;
-    --dark: #6f9b55;
-    --sel: #f6f669;
-    --move: rgba(20, 85, 30, 0.45);
-    --last: rgba(246, 246, 105, 0.35);
-    --check: rgba(231, 76, 60, 0.75);
-    --text: #e2e8f0;
-    --muted: #94a3b8;
-    --accent: #38bdf8;
-    --panel: #161d2e;
-    --a1: #f6c945;  /* hint arrow 1 - gold  */
-    --a2: #7eb6ff;  /* hint arrow 2 - blue  */
-    --a3: #f48fb1;  /* hint arrow 3 - pink  */
+    /* light-grey base with pastel blue / green / beige accents */
+    --bg:        #e9edf1;
+    --bg-2:      #f3f6f9;
+    --card:      #ffffff;
+    --ink:       #2c3440;
+    --muted:     #7c8794;
+    --line:      #e2e8ef;
+    --blue:      #dceaf6;  --blue-ink:  #4a7bb0;
+    --green:     #dff0e6;  --green-ink: #4f9d78;
+    --beige:     #f0e9da;  --beige-ink: #a58f63;
+    --sq-light:  #efe8d8;  /* beige */
+    --sq-dark:   #a9c6bb;  /* pastel sage */
+    --sel:       rgba(126,184,158,0.55);
+    --move:      rgba(79,157,120,0.40);
+    --last:      rgba(200,183,132,0.45);
+    --check:     rgba(224,138,138,0.80);
+    --a1:        #d9b877;  /* forecast arrow 1 - beige  */
+    --a2:        #7fb1de;  /* forecast arrow 2 - blue   */
+    --a3:        #78c39c;  /* forecast arrow 3 - green  */
+    --shadow:    0 1px 2px rgba(24,39,60,.05), 0 10px 30px rgba(24,39,60,.07);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
     min-height: 100%;
-    background: radial-gradient(circle at 50% -10%, #1a2236, var(--bg));
-    color: var(--text);
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, var(--bg-2), var(--bg));
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     display: flex; align-items: center; justify-content: center;
-    padding: 24px;
-    -webkit-font-smoothing: antialiased;
+    padding: 28px; -webkit-font-smoothing: antialiased;
   }
-  .app { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-  .title { font-size: 26px; font-weight: 800; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; }
-  .status { font-size: 15px; color: var(--muted); min-height: 22px; text-align: center; letter-spacing: .5px; }
-  .status b { color: var(--text); }
+  .app { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .title { font-size: 22px; font-weight: 700; letter-spacing: 6px; color: var(--ink); text-transform: uppercase; }
+  .title span { color: var(--blue-ink); }
+  .status { font-size: 14px; color: var(--muted); min-height: 20px; text-align: center; letter-spacing: .3px; }
+  .status b { color: var(--ink); }
+  .lbl { font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
 
-  .main { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+  .main { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
 
-  /* ---- left info panel ---- */
-  .panel { width: 250px; display: flex; flex-direction: column; gap: 12px; }
-  .mood {
-    background: var(--panel); border-radius: 14px; padding: 14px;
-    display: flex; align-items: center; gap: 12px;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
-  }
-  .face { font-size: 46px; line-height: 1; transition: transform .2s; }
-  .face.pop { transform: scale(1.25); }
-  .mood-text { display: flex; flex-direction: column; gap: 2px; }
-  .quality { font-size: 15px; font-weight: 700; }
+  /* ---------- left panel ---------- */
+  .panel { width: 268px; display: flex; flex-direction: column; gap: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+
+  .mood { padding: 16px; display: flex; align-items: center; gap: 14px; }
+  .face { font-size: 44px; line-height: 1; transition: transform .18s ease; }
+  .face.pop { transform: scale(1.22); }
+  .mood-text { display: flex; flex-direction: column; gap: 3px; }
+  .quality { font-size: 16px; font-weight: 700; }
   .quality-sub { font-size: 12px; color: var(--muted); }
 
-  .console {
-    background: #0a0e16; border-radius: 14px; padding: 14px;
-    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 13px; line-height: 1.5;
-    box-shadow: inset 0 0 0 1px rgba(56,189,248,.18);
-    min-height: 150px;
-  }
-  .console .ckey { color: #5eead4; letter-spacing: 1px; font-size: 11px; text-transform: uppercase; }
-  .console .opening { color: #e2e8f0; font-weight: 600; margin: 2px 0 10px; min-height: 18px; }
-  .console .hint-title { color: #5eead4; letter-spacing: 1px; font-size: 11px; text-transform: uppercase; margin-bottom: 4px; }
-  .console .hint-row { display: flex; gap: 7px; align-items: baseline; margin: 4px 0; }
-  .console .badge {
-    flex: none; width: 17px; height: 17px; border-radius: 50%;
+  .console { padding: 16px; }
+  .console .opening { color: var(--ink); font-weight: 700; font-size: 15px; margin: 4px 0 14px; min-height: 20px; }
+  .console .fc-head { display:flex; align-items:baseline; justify-content:space-between; }
+  .console .fc-sub { font-size: 11px; color: var(--muted); margin: 3px 0 8px; }
+  .fc-row { display: flex; align-items: center; gap: 9px; padding: 5px 0; border-top: 1px solid var(--line); }
+  .fc-row:first-of-type { border-top: none; }
+  .badge {
+    flex: none; width: 19px; height: 19px; border-radius: 50%;
     display: inline-flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 800; color: #06121f;
+    font-size: 11px; font-weight: 800; color: #2c3440;
   }
-  .console .badge.b1 { background: var(--a1); }
-  .console .badge.b2 { background: var(--a2); }
-  .console .badge.b3 { background: var(--a3); }
-  .console .hmv { color: #f8fafc; font-weight: 700; }
-  .console .hexp { color: var(--muted); font-size: 12px; }
-  .console .heval { color: #7dd3fc; font-size: 11px; }
-  .console .empty { color: #475569; font-style: italic; }
+  .badge.b1 { background: var(--a1); } .badge.b2 { background: var(--a2); } .badge.b3 { background: var(--a3); }
+  .badge.plain { background: var(--line); color: var(--muted); }
+  .fc-who { font-size: 11px; font-weight: 700; letter-spacing: .04em; width: 30px; }
+  .fc-row.you .fc-who { color: var(--blue-ink); }
+  .fc-row.bot .fc-who { color: var(--green-ink); }
+  .fc-mv { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 700; font-size: 14px; color: var(--ink); }
+  .empty { color: var(--muted); font-style: italic; font-size: 13px; }
 
-  /* ---- board ---- */
-  .board-frame {
-    padding: 22px; background: var(--panel); border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.04);
-  }
-  .board-area { position: relative; width: min(74vmin, 540px); height: min(74vmin, 540px); }
-  .board {
-    position: absolute; inset: 0;
-    display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
-    border-radius: 6px; overflow: hidden; touch-action: manipulation;
-  }
+  /* ---------- board ---------- */
+  .board-frame { padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
+  .board-area { position: relative; width: min(72vmin, 528px); height: min(72vmin, 528px); }
+  .board { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(8,1fr); grid-template-rows: repeat(8,1fr); border-radius: 8px; overflow: hidden; touch-action: manipulation; box-shadow: inset 0 0 0 1px rgba(24,39,60,.06); }
   .arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible; }
-  .sq {
-    position: relative; display: flex; align-items: center; justify-content: center;
-    cursor: pointer; user-select: none; font-size: min(9vmin, 60px); line-height: 1;
-  }
-  .sq.light { background: var(--light); }
-  .sq.dark  { background: var(--dark); }
+  .sq { position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; font-size: min(8.8vmin,58px); line-height: 1; }
+  .sq.light { background: var(--sq-light); } .sq.dark { background: var(--sq-dark); }
   .sq.sel::after, .sq.last::after { content: ""; position: absolute; inset: 0; }
-  .sq.sel::after  { background: var(--sel); opacity: .55; }
+  .sq.sel::after  { background: var(--sel); }
   .sq.last::after { background: var(--last); }
   .sq.check::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, var(--check), transparent 72%); }
   .piece { position: relative; z-index: 2; }
-  .piece.w { color: #ffffff; text-shadow: 0 1px 1px rgba(0,0,0,.35), 0 0 2px rgba(0,0,0,.5); }
-  .piece.b { color: #2a2a2a; text-shadow: 0 1px 1px rgba(255,255,255,.15); }
-  .dot::before { content: ""; position: absolute; z-index: 1; width: 28%; height: 28%; border-radius: 50%; background: var(--move); }
-  .dot.capture::before { width: 92%; height: 92%; border-radius: 50%; background: transparent; border: 6px solid var(--move); box-sizing: border-box; }
-  .sq .coord { position: absolute; z-index: 3; font-size: 11px; font-weight: 700; opacity: .6; }
-  .sq .coord.file { bottom: 2px; right: 4px; }
-  .sq .coord.rank { top: 2px; left: 4px; }
-  .sq.light .coord { color: var(--dark); }
-  .sq.dark  .coord { color: var(--light); }
+  .piece.w { color: #ffffff; text-shadow: 0 1px 1px rgba(24,39,60,.28), 0 0 1px rgba(24,39,60,.5); }
+  .piece.b { color: #37404d; text-shadow: 0 1px 1px rgba(255,255,255,.35); }
+  .dot::before { content: ""; position: absolute; z-index: 1; width: 27%; height: 27%; border-radius: 50%; background: var(--move); }
+  .dot.capture::before { width: 90%; height: 90%; border-radius: 50%; background: transparent; border: 5px solid var(--move); box-sizing: border-box; }
+  .sq .coord { position: absolute; z-index: 3; font-size: 10px; font-weight: 700; opacity: .55; }
+  .sq .coord.file { bottom: 3px; right: 4px; } .sq .coord.rank { top: 3px; left: 4px; }
+  .sq.light .coord { color: var(--sq-dark); } .sq.dark .coord { color: var(--sq-light); }
 
+  /* ---------- controls ---------- */
   .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
   button {
-    font: inherit; font-weight: 600; font-size: 14px; color: var(--text);
-    background: var(--panel); border: 1px solid rgba(255,255,255,.12); border-radius: 9px;
-    padding: 9px 16px; cursor: pointer; letter-spacing: .5px; transition: background .15s, transform .05s;
+    font: inherit; font-weight: 600; font-size: 14px; color: var(--ink);
+    background: var(--card); border: 1px solid var(--line); border-radius: 11px;
+    padding: 10px 18px; cursor: pointer; letter-spacing: .2px; box-shadow: var(--shadow);
+    transition: background .15s, transform .05s, border-color .15s;
   }
-  button:hover { background: #1e2740; }
+  button:hover { border-color: #cfd8e2; }
   button:active { transform: translateY(1px); }
-  button:disabled { opacity: .45; cursor: not-allowed; }
-  button.primary { background: var(--accent); color: #06283d; border-color: transparent; }
-  button.primary:hover { background: #5cc8fb; }
-  button.hint { background: #f6c945; color: #3a2c00; border-color: transparent; width: 100%; }
-  button.hint:hover { background: #ffd95e; }
-  select { font: inherit; background: var(--panel); color: var(--text); border: 1px solid rgba(255,255,255,.12); border-radius: 7px; padding: 6px; }
-  .captured { display: flex; gap: 10px; font-size: 20px; min-height: 26px; justify-content: center; }
-  .hint-note { color: var(--muted); font-size: 12px; letter-spacing: .5px; text-align: center; max-width: 560px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.primary { background: var(--blue); color: var(--blue-ink); border-color: transparent; }
+  button.primary:hover { background: #d0e3f4; }
+  button.accent  { background: var(--green); color: var(--green-ink); border-color: transparent; }
+  button.accent:hover { background: #d2ecdd; }
+
+  .sliders { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .slider { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 12px 16px; width: 250px; }
+  .slider .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .slider b { color: var(--ink); font-weight: 800; }
+  .slider .tier { font-size: 11px; color: var(--green-ink); font-weight: 700; }
+  input[type=range] { width: 100%; accent-color: var(--blue-ink); cursor: pointer; }
+  .slider.strength input[type=range] { accent-color: var(--green-ink); }
+  .scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 5px; }
+
+  .captured { display: flex; gap: 8px; font-size: 20px; min-height: 26px; justify-content: center; }
+  .foot-note { color: var(--muted); font-size: 12px; letter-spacing: .2px; text-align: center; max-width: 560px; }
 
   .overlay {
-    position: absolute; inset: 0; border-radius: 6px;
-    background: rgba(15,20,32,.85); backdrop-filter: blur(3px);
+    position: absolute; inset: 0; border-radius: 8px;
+    background: rgba(233,237,241,.86); backdrop-filter: blur(3px);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 16px; text-align: center; z-index: 20;
+    gap: 14px; text-align: center; z-index: 20;
   }
   .overlay.hidden { display: none; }
-  .overlay h2 { font-size: 24px; letter-spacing: 1px; }
+  .overlay h2 { font-size: 24px; letter-spacing: .5px; color: var(--ink); }
   .overlay p { color: var(--muted); font-size: 14px; }
 </style>
 </head>
 <body>
   <div class="app">
-    <div class="title">♛ Chess Masters ♛</div>
+    <div class="title">♛ Chess <span>Masters</span> ♛</div>
     <div class="status" id="status">You are White. Click a piece to begin.</div>
 
     <div class="main">
-      <!-- LEFT PANEL: smiley + opening console + hint -->
+      <!-- LEFT PANEL -->
       <div class="panel">
-        <div class="mood">
+        <div class="card mood">
           <div class="face" id="face">🙂</div>
           <div class="mood-text">
             <div class="quality" id="quality">Ready</div>
             <div class="quality-sub" id="qualitySub">Make your move</div>
           </div>
         </div>
-        <div class="console">
-          <div class="ckey">Opening</div>
+        <div class="card console">
+          <div class="lbl">Opening</div>
           <div class="opening" id="opening">—</div>
-          <div id="hintBox">
-            <div class="hint-title">Best moves</div>
-            <div class="empty" id="hintEmpty">Press “Hint” for the top 3 moves.</div>
-            <div id="hintList"></div>
+          <div class="fc-head">
+            <div class="lbl">Next moves (predicted)</div>
           </div>
+          <div class="fc-sub" id="fcSub">Press “Show next moves” for the predicted line.</div>
+          <div id="fcList"></div>
         </div>
-        <button class="hint" id="hint">💡 Hint — show top 3 moves</button>
+        <button class="accent" id="forecast">🔮 Show next moves</button>
       </div>
 
-      <!-- CENTER: captured trays + board -->
+      <!-- CENTER -->
       <div style="display:flex; flex-direction:column; gap:10px; align-items:center;">
         <div class="captured" id="capByWhite" title="Computer pieces you captured"></div>
         <div class="board-frame">
@@ -184,16 +182,22 @@
     <div class="controls">
       <button class="primary" id="newGame">New Game</button>
       <button id="undo">Undo</button>
-      <label style="display:flex; align-items:center; gap:6px; color:var(--muted); font-size:13px;">
-        Difficulty
-        <select id="difficulty">
-          <option value="2">Easy</option>
-          <option value="3" selected>Normal</option>
-          <option value="4">Hard</option>
-        </select>
-      </label>
     </div>
-    <div class="hint-note">You play White (bottom). The smiley grades each move; the console names the opening; “Hint” reveals the 3 best moves with arrows.</div>
+
+    <div class="sliders">
+      <div class="slider strength">
+        <div class="row"><span class="lbl">Bot strength</span><span><b id="eloVal">1500</b> Elo · <span class="tier" id="eloTier">Intermediate</span></span></div>
+        <input type="range" id="elo" min="1000" max="2000" step="50" value="1500">
+        <div class="scale"><span>1000 · Beginner</span><span>1500</span><span>Expert · 2000</span></div>
+      </div>
+      <div class="slider">
+        <div class="row"><span class="lbl">Forecast depth</span><span><b id="foreVal">3</b> moves ahead</span></div>
+        <input type="range" id="fore" min="1" max="10" step="1" value="3">
+        <div class="scale"><span>1</span><span>5</span><span>10</span></div>
+      </div>
+    </div>
+
+    <div class="foot-note">You play White. The smiley grades your moves, the console names the opening, and “Show next moves” predicts the game continuation up to 10 moves ahead.</div>
   </div>
 
 <script>
@@ -304,14 +308,9 @@
     if(s.turn==='w'){ let v=-Infinity; for(const m of moves){ v=Math.max(v,minimax(applyMove(s,m),depth-1,alpha,beta)); alpha=Math.max(alpha,v); if(alpha>=beta) break; } return v; }
     else { let v=Infinity; for(const m of moves){ v=Math.min(v,minimax(applyMove(s,m),depth-1,alpha,beta)); beta=Math.min(beta,v); if(beta<=alpha) break; } return v; }
   }
-  function computerMove(s, depth){
-    const moves=orderMoves(legalMoves(s)); let best=Infinity, bests=[];
-    for(const m of moves){ const score=minimax(applyMove(s,m),depth-1,-Infinity,Infinity); if(score<best){best=score;bests=[m];} else if(score===best) bests.push(m); }
-    return bests[Math.floor(Math.random()*bests.length)]||null;
-  }
 
   // =========================================================================
-  //  ANALYSIS HELPERS  (SAN, openings, move grading, hints)
+  //  ANALYSIS  (SAN, openings, grading, Elo-scaled bot, forecast line)
   // =========================================================================
   const sqName = ([r,c]) => FILES[c] + (8-r);
   const sameMove = (a,b) => a.from[0]===b.from[0]&&a.from[1]===b.from[1]&&a.to[0]===b.to[0]&&a.to[1]===b.to[1]&&a.promo===b.promo;
@@ -323,9 +322,8 @@
     else if (m.castle==='Q') san='O-O-O';
     else {
       const t=typeOf(m.piece), dest=sqName(m.to);
-      if (t==='p') {
-        san = ((m.captured||m.ep) ? FILES[m.from[1]]+'x' : '') + dest + (m.promo?'='+m.promo.toUpperCase():'');
-      } else {
+      if (t==='p') san = ((m.captured||m.ep) ? FILES[m.from[1]]+'x' : '') + dest + (m.promo?'='+m.promo.toUpperCase():'');
+      else {
         const others = legalMoves(s).filter(x => x.piece===m.piece && x.to[0]===m.to[0] && x.to[1]===m.to[1] && !(x.from[0]===m.from[0]&&x.from[1]===m.from[1]));
         let dis='';
         if (others.length) {
@@ -340,7 +338,6 @@
     return san;
   }
 
-  // Small opening book keyed by space-joined SAN. Longest matching prefix wins.
   const BOOK = {
     "e4":"King's Pawn Opening","e4 e5":"Open Game","e4 e5 Nf3":"King's Knight Opening",
     "e4 e5 Nf3 Nc6":"King's Knight, Normal","e4 e5 Nf3 Nc6 Bb5":"Ruy López","e4 e5 Nf3 Nc6 Bb5 a6":"Ruy López, Morphy Defense",
@@ -361,43 +358,62 @@
     return sanHist.length ? "Out of book — you're on your own!" : "—";
   }
 
-  // Grade White's move by centipawn loss vs. the best available move.
+  // ---- move grading for the smiley (centipawn loss vs. best) ----
+  const GRADE_DEPTH = 3, FORECAST_DEPTH = 3;
   function gradeMove(pre, played, depth) {
     const moves=legalMoves(pre); let best=-Infinity, playedScore=0;
     for (const m of moves){ const sc=minimax(applyMove(pre,m),depth-1,-Infinity,Infinity); if(sc>best) best=sc; if(sameMove(m,played)) playedScore=sc; }
-    return { loss: Math.max(0, best-playedScore), best, playedScore };
+    return { loss: Math.max(0, best-playedScore) };
   }
   function faceFor(loss) {
-    if (loss<=15)  return {emoji:'😄', label:'Best move!',  sub:'Brilliant — exactly right.', color:'#34d399'};
-    if (loss<=55)  return {emoji:'🙂', label:'Good move',    sub:'Solid and sensible.',        color:'#a3e635'};
-    if (loss<=120) return {emoji:'😐', label:'Inaccuracy',   sub:'A bit better was available.', color:'#facc15'};
-    if (loss<=300) return {emoji:'🙁', label:'Mistake',      sub:'That lets some advantage slip.', color:'#fb923c'};
-    return                {emoji:'😟', label:'Blunder',      sub:'Ouch — that loses material.', color:'#f87171'};
+    if (loss<=15)  return {emoji:'😄', label:'Best move!',  sub:'Brilliant — exactly right.',      color:'#4f9d78'};
+    if (loss<=55)  return {emoji:'🙂', label:'Good move',    sub:'Solid and sensible.',             color:'#5a9d55'};
+    if (loss<=120) return {emoji:'😐', label:'Inaccuracy',   sub:'A bit better was available.',     color:'#a58f63'};
+    if (loss<=300) return {emoji:'🙁', label:'Mistake',      sub:'That lets some advantage slip.',  color:'#c98a4b'};
+    return                {emoji:'😟', label:'Blunder',      sub:'Ouch — that loses material.',     color:'#c96f6f'};
   }
 
-  function topMoves(s, n, depth) {
+  // ---- Elo-scaled bot: depth + how often it strays from the best move ----
+  function eloParams(elo) {
+    const depth  = elo<1300?1 : elo<1600?2 : elo<1850?3 : 4;   // search depth
+    const spread = elo<1300?6 : elo<1600?4 : elo<1850?2 : 1;   // # of top moves it may randomize among
+    const stray  = Math.max(0, Math.min(1, (2000-elo)/1000)) * 0.6; // chance to not pick the best
+    return { depth, spread, stray };
+  }
+  function eloTier(elo){ return elo<1200?'Beginner' : elo<1400?'Casual' : elo<1600?'Intermediate' : elo<1850?'Advanced' : 'Expert'; }
+
+  // Bot plays Black -> wants the LOWEST (most negative) score.
+  function chooseBotMove(s, elo) {
+    const { depth, spread, stray } = eloParams(elo);
     const scored = legalMoves(s).map(m => ({ m, score: minimax(applyMove(s,m), depth-1, -Infinity, Infinity) }));
-    scored.sort((a,b)=> b.score - a.score);   // White wants the highest score
-    return scored.slice(0, n);
-  }
-  function explainMove(s, m) {
-    if (m.castle) return 'Castle the king to safety';
-    if (m.captured) return `Capture the ${PNAME[typeOf(m.captured)]} on ${sqName(m.to)}`;
-    const ns=applyMove(s,m);
-    if (inCheck(ns,ns.turn)) return legalMoves(ns).length===0 ? 'Checkmate!' : `Give check with the ${PNAME[typeOf(m.piece)]}`;
-    const t=typeOf(m.piece), dest=sqName(m.to);
-    if ((t==='n'||t==='b') && m.from[0]===7) return `Develop the ${PNAME[t]} to ${dest}`;
-    if (t==='p' && ['e4','d4','e5','d5','c4','c5'].includes(dest)) return `Push a pawn to ${dest}, fighting for the center`;
-    if (t==='r' && (dest[0]==='d'||dest[0]==='e')) return `Activate the rook toward the center`;
-    return `Improve the ${PNAME[t]} to ${dest}`;
-  }
-  function fmtEval(score) {
-    if (score >  9000) return '+M';
-    if (score < -9000) return '−M';
-    const p = score/100; return (p>=0?'+':'−') + Math.abs(p).toFixed(1);
+    if (!scored.length) return null;
+    scored.sort((a,b)=> a.score - b.score);
+    if (Math.random() < stray) {
+      const k = Math.min(spread, scored.length);
+      return scored[Math.floor(Math.random()*k)].m;   // a slightly-inferior but reasonable move
+    }
+    const best = scored[0].score, bests = scored.filter(x=>x.score===best);
+    return bests[Math.floor(Math.random()*bests.length)].m;
   }
 
-  const GRADE_DEPTH = 3, HINT_DEPTH = 3;
+  // Best move for whoever is to move (used to build the forecast line).
+  function bestMoveFor(s, depth) {
+    const scored = legalMoves(s).map(m => ({ m, score: minimax(applyMove(s,m), depth-1, -Infinity, Infinity) }));
+    if (!scored.length) return null;
+    scored.sort((a,b)=> s.turn==='w' ? b.score-a.score : a.score-b.score);
+    const best = scored[0].score, bests = scored.filter(x=>x.score===best);
+    return bests[Math.floor(Math.random()*bests.length)].m;
+  }
+  // Predicted continuation: the next `plies` best moves for both sides.
+  function forecast(s, plies, depth) {
+    const line=[]; let cur=cloneState(s);
+    for (let i=0;i<plies;i++){
+      const m=bestMoveFor(cur, depth); if(!m) break;
+      line.push({ move:m, san:toSAN(cur,m), side:cur.turn });
+      cur=applyMove(cur,m);
+    }
+    return line;
+  }
 
   // =========================================================================
   //  UI
@@ -406,16 +422,19 @@
   const statusEl=document.getElementById('status');
   const overlay=document.getElementById('overlay'), ovTitle=document.getElementById('ovTitle'), ovText=document.getElementById('ovText');
   const capW=document.getElementById('capByWhite'), capB=document.getElementById('capByBlack');
-  const difficultyEl=document.getElementById('difficulty');
   const faceEl=document.getElementById('face'), qualityEl=document.getElementById('quality'), qualitySubEl=document.getElementById('qualitySub');
-  const openingEl=document.getElementById('opening'), hintListEl=document.getElementById('hintList'), hintEmptyEl=document.getElementById('hintEmpty');
+  const openingEl=document.getElementById('opening'), fcListEl=document.getElementById('fcList'), fcSubEl=document.getElementById('fcSub');
+  const eloEl=document.getElementById('elo'), eloValEl=document.getElementById('eloVal'), eloTierEl=document.getElementById('eloTier');
+  const foreEl=document.getElementById('fore'), foreValEl=document.getElementById('foreVal');
 
-  let state, selected, legalForSel, lastMove, history, sanHistory, busy, gameOver;
+  let state, selected, legalForSel, lastMove, history, sanHistory, busy, gameOver, forecastShown;
+
+  const currentElo = () => parseInt(eloEl.value,10);
 
   function reset() {
-    state=newState(); selected=null; legalForSel=[]; lastMove=null; history=[]; sanHistory=[]; busy=false; gameOver=false;
-    overlay.classList.add('hidden'); clearHints();
-    faceEl.textContent='🙂'; qualityEl.textContent='Ready'; qualityEl.style.color='var(--text)'; qualitySubEl.textContent='Make your move';
+    state=newState(); selected=null; legalForSel=[]; lastMove=null; history=[]; sanHistory=[]; busy=false; gameOver=false; forecastShown=false;
+    overlay.classList.add('hidden'); clearForecast();
+    faceEl.textContent='🙂'; qualityEl.textContent='Ready'; qualityEl.style.color='var(--ink)'; qualitySubEl.textContent='Make your move';
     openingEl.textContent='—';
     render(); setStatus('Your move. You are White.');
   }
@@ -457,64 +476,73 @@
     qualitySubEl.textContent=f.sub;
   }
 
-  // ---- hints (console list + board arrows) ----
+  // ---- forecast (predicted line) : console list + board arrows ----
   const SVGNS='http://www.w3.org/2000/svg';
-  function clearHints(){ arrowsEl.innerHTML=''; hintListEl.innerHTML=''; if(hintEmptyEl) hintEmptyEl.style.display=''; }
-  function showHints() {
-    if (busy||gameOver||state.turn!=='w') return;
-    const tops=topMoves(state,3,HINT_DEPTH);
-    hintEmptyEl.style.display='none';
-    hintListEl.innerHTML='';
-    tops.forEach((entry,i)=>{
-      const san=toSAN(state, entry.m), exp=explainMove(state, entry.m), ev=fmtEval(entry.score);
-      const row=document.createElement('div'); row.className='hint-row';
-      row.innerHTML=`<span class="badge b${i+1}">${i+1}</span><span><span class="hmv">${san}</span> <span class="heval">${ev}</span><br><span class="hexp">${exp}</span></span>`;
-      hintListEl.appendChild(row);
-    });
-    drawArrows(tops);
+  function clearForecast(){ arrowsEl.innerHTML=''; fcListEl.innerHTML=''; fcSubEl.style.display=''; forecastShown=false; }
+  function showForecast() {
+    if (busy||gameOver) return;
+    forecastShown=true; fcSubEl.style.display='none';
+    fcListEl.innerHTML='<div class="empty">Calculating…</div>';
+    setTimeout(()=>{
+      const n=parseInt(foreEl.value,10);
+      const depth=Math.max(2, eloParams(currentElo()).depth);
+      const line=forecast(state, n, depth);
+      renderForecast(line);
+      drawArrows(line.slice(0,3).map(x=>x.move));
+    },20);
   }
-  function drawArrows(tops) {
+  function renderForecast(line) {
+    fcListEl.innerHTML='';
+    if(!line.length){ fcListEl.innerHTML='<div class="empty">No moves to predict — game over.</div>'; return; }
+    line.forEach((step,i)=>{
+      const you=step.side==='w';
+      const row=document.createElement('div'); row.className='fc-row '+(you?'you':'bot');
+      const badge = i<3 ? 'badge b'+(i+1) : 'badge plain';
+      row.innerHTML = `<span class="${badge}">${i+1}</span><span class="fc-who">${you?'You':'Bot'}</span><span class="fc-mv">${step.san}</span>`;
+      fcListEl.appendChild(row);
+    });
+  }
+  function drawArrows(moves) {
     arrowsEl.innerHTML='';
+    const cssv=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
     const defs=document.createElementNS(SVGNS,'defs');
     ['--a1','--a2','--a3'].forEach((v,i)=>{
-      const col=getComputedStyle(document.documentElement).getPropertyValue(v).trim();
       const mk=document.createElementNS(SVGNS,'marker');
       mk.setAttribute('id','ah'+i); mk.setAttribute('markerUnits','userSpaceOnUse');
       mk.setAttribute('markerWidth','0.5'); mk.setAttribute('markerHeight','0.5');
       mk.setAttribute('refX','0.25'); mk.setAttribute('refY','0.25'); mk.setAttribute('orient','auto');
       const path=document.createElementNS(SVGNS,'path');
-      path.setAttribute('d','M0,0 L0.5,0.25 L0,0.5 Z'); path.setAttribute('fill',col);
+      path.setAttribute('d','M0,0 L0.5,0.25 L0,0.5 Z'); path.setAttribute('fill',cssv(v));
       mk.appendChild(path); defs.appendChild(mk);
     });
     arrowsEl.appendChild(defs);
     const cols=['--a1','--a2','--a3'];
-    tops.forEach((entry,i)=>{
-      const col=getComputedStyle(document.documentElement).getPropertyValue(cols[i]).trim();
-      const [r1,c1]=entry.m.from,[r2,c2]=entry.m.to;
+    moves.forEach((m,i)=>{
+      const col=cssv(cols[i]);
+      const [r1,c1]=m.from,[r2,c2]=m.to;
       let x1=c1+0.5,y1=r1+0.5,x2=c2+0.5,y2=r2+0.5;
       const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy)||1, ux=dx/len,uy=dy/len;
-      const ex=x2-ux*0.34, ey=y2-uy*0.34;            // pull tip back so arrowhead sits before square centre
+      const ex=x2-ux*0.34, ey=y2-uy*0.34;
       const line=document.createElementNS(SVGNS,'line');
       line.setAttribute('x1',x1); line.setAttribute('y1',y1); line.setAttribute('x2',ex); line.setAttribute('y2',ey);
       line.setAttribute('stroke',col); line.setAttribute('stroke-width','0.13'); line.setAttribute('stroke-linecap','round');
-      line.setAttribute('opacity','0.9'); line.setAttribute('marker-end','url(#ah'+i+')');
+      line.setAttribute('opacity','0.92'); line.setAttribute('marker-end','url(#ah'+i+')');
       arrowsEl.appendChild(line);
-      // numbered badge a little along the arrow
       const bx=x1+ux*0.42, by=y1+uy*0.42;
       const circ=document.createElementNS(SVGNS,'circle');
       circ.setAttribute('cx',bx); circ.setAttribute('cy',by); circ.setAttribute('r','0.2'); circ.setAttribute('fill',col);
-      circ.setAttribute('stroke','#06121f'); circ.setAttribute('stroke-width','0.03');
+      circ.setAttribute('stroke','#ffffff'); circ.setAttribute('stroke-width','0.03');
       arrowsEl.appendChild(circ);
       const txt=document.createElementNS(SVGNS,'text');
       txt.setAttribute('x',bx); txt.setAttribute('y',by); txt.setAttribute('text-anchor','middle');
-      txt.setAttribute('dominant-baseline','central'); txt.setAttribute('font-size','0.26'); txt.setAttribute('font-weight','800'); txt.setAttribute('fill','#06121f');
+      txt.setAttribute('dominant-baseline','central'); txt.setAttribute('font-size','0.26'); txt.setAttribute('font-weight','800'); txt.setAttribute('fill','#2c3440');
       txt.textContent=i+1; arrowsEl.appendChild(txt);
     });
   }
 
   function onSquareClick(r,c) {
     if (busy||gameOver||state.turn!=='w') return;
-    clearHints();
+    clearForecast();
     const p=state.board[r][c];
     if (selected) { const mv=legalForSel.find(m=>m.to[0]===r&&m.to[1]===c); if(mv){ doMove(mv); return; } }
     if (p&&colorOf(p)==='w'){ selected=[r,c]; legalForSel=legalMoves(state).filter(m=>m.from[0]===r&&m.from[1]===c); render(); }
@@ -524,7 +552,7 @@
   function doMove(mv) {
     const pre=cloneState(state);
     history.push(pre); sanHistory.push(toSAN(pre,mv));
-    state=applyMove(state,mv); lastMove=mv; selected=null; legalForSel=[]; clearHints();
+    state=applyMove(state,mv); lastMove=mv; selected=null; legalForSel=[]; clearForecast();
     render(); refreshOpening();
     busy=true; setStatus('Checking your move…');
     setTimeout(()=>{
@@ -532,15 +560,14 @@
       if (checkEnd('w')) { busy=false; return; }
       setStatus('Computer is thinking…');
       setTimeout(()=>{
-        const depth=parseInt(difficultyEl.value,10);
-        const reply=computerMove(state,depth);
+        const reply=chooseBotMove(state, currentElo());
         if (reply){ const pre2=cloneState(state); history.push(pre2); sanHistory.push(toSAN(pre2,reply)); state=applyMove(state,reply); lastMove=reply; }
         render(); refreshOpening(); busy=false; checkEnd('b');
       },50);
     },20);
   }
 
-  function checkEnd(justMovedBy) {
+  function checkEnd() {
     const toMove=state.turn, moves=legalMoves(state);
     if (moves.length>0) {
       setStatus(inCheck(state,toMove)
@@ -562,18 +589,22 @@
     state=history.pop();
     if (state.turn==='b'&&history.length>0) state=history.pop();
     sanHistory.length=history.length;
-    selected=null; legalForSel=[]; lastMove=null; gameOver=false; clearHints();
+    selected=null; legalForSel=[]; lastMove=null; gameOver=false; clearForecast();
     overlay.classList.add('hidden');
-    faceEl.textContent='🙂'; qualityEl.textContent='Ready'; qualityEl.style.color='var(--text)'; qualitySubEl.textContent='Make your move';
+    faceEl.textContent='🙂'; qualityEl.textContent='Ready'; qualityEl.style.color='var(--ink)'; qualitySubEl.textContent='Make your move';
     render(); refreshOpening(); setStatus('Move undone. Your move.');
   }
 
+  // events
   boardEl.addEventListener('click',e=>{ const sq=e.target.closest('.sq'); if(!sq) return; onSquareClick(parseInt(sq.dataset.r,10),parseInt(sq.dataset.c,10)); });
   document.getElementById('newGame').addEventListener('click',reset);
   document.getElementById('ovBtn').addEventListener('click',reset);
   document.getElementById('undo').addEventListener('click',undo);
-  document.getElementById('hint').addEventListener('click',showHints);
+  document.getElementById('forecast').addEventListener('click',showForecast);
+  eloEl.addEventListener('input',()=>{ eloValEl.textContent=eloEl.value; eloTierEl.textContent=eloTier(currentElo()); });
+  foreEl.addEventListener('input',()=>{ foreValEl.textContent=foreEl.value; if(forecastShown) showForecast(); });
 
+  eloValEl.textContent=eloEl.value; eloTierEl.textContent=eloTier(currentElo()); foreValEl.textContent=foreEl.value;
   reset();
 })();
 </script>
