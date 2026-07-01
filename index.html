@@ -74,6 +74,15 @@
   .fc-row.bot .fc-who { color: var(--green-ink); }
   .fc-mv { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 700; font-size: 14px; color: var(--ink); }
   .empty { color: var(--muted); font-style: italic; font-size: 13px; }
+  #fcList { max-height: 300px; overflow-y: auto; }
+  .rev { font-size: 13px; padding: 3px 0; }
+  .rev.muted { color: var(--muted); font-size: 12px; }
+  .threat-ov { position: absolute; inset: 0; z-index: 1; }
+  .tabs { display: flex; flex-direction: column; gap: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 12px; }
+  .tab { width: 100%; text-align: left; font-size: 13px; padding: 9px 12px; }
+  .tab.best { color: var(--green-ink); }
+  .tab.threats { color: #b5872a; }
+  .tab.undo { color: #b06a6a; }
 
   /* ---------- board ---------- */
   .board-frame { padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
@@ -87,7 +96,7 @@
   .sq.last::after { background: var(--last); }
   .sq.check::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, var(--check), transparent 72%); }
   .piece { position: relative; z-index: 2; }
-  .piece.w { color: #ffffff; text-shadow: 0 1px 1px rgba(24,39,60,.28), 0 0 1px rgba(24,39,60,.5); }
+  .piece.w { color: #9e1f33; text-shadow: 0 1px 1px rgba(255,255,255,.30), 0 0 1px rgba(0,0,0,.22); }
   .piece.b { color: #37404d; text-shadow: 0 1px 1px rgba(255,255,255,.35); }
   .dot::before { content: ""; position: absolute; z-index: 1; width: 27%; height: 27%; border-radius: 50%; background: var(--move); }
   .dot.capture::before { width: 90%; height: 90%; border-radius: 50%; background: transparent; border: 5px solid var(--move); box-sizing: border-box; }
@@ -159,6 +168,12 @@
           <div id="fcList"></div>
         </div>
         <button class="accent" id="forecast">🔮 Show next moves</button>
+        <div class="tabs" id="mistakeTabs" style="display:none;">
+          <div class="lbl" style="margin-bottom:2px">Oops — mistake help</div>
+          <button class="tab best" id="tabBest">✓ Show best previous move</button>
+          <button class="tab threats" id="tabThreats">⚠ Show threats</button>
+          <button class="tab undo" id="tabUndo">↩ Undo move</button>
+        </div>
       </div>
 
       <!-- CENTER -->
@@ -359,7 +374,7 @@
   }
 
   // ---- move grading for the smiley (centipawn loss vs. best) ----
-  const GRADE_DEPTH = 3, FORECAST_DEPTH = 3;
+  const GRADE_DEPTH = 3, FORECAST_DEPTH = 3, ANALYSIS_DEPTH = 3, MISTAKE_TH = 55;
   function gradeMove(pre, played, depth) {
     const moves=legalMoves(pre); let best=-Infinity, playedScore=0;
     for (const m of moves){ const sc=minimax(applyMove(pre,m),depth-1,-Infinity,Infinity); if(sc>best) best=sc; if(sameMove(m,played)) playedScore=sc; }
@@ -426,14 +441,18 @@
   const openingEl=document.getElementById('opening'), fcListEl=document.getElementById('fcList'), fcSubEl=document.getElementById('fcSub');
   const eloEl=document.getElementById('elo'), eloValEl=document.getElementById('eloVal'), eloTierEl=document.getElementById('eloTier');
   const foreEl=document.getElementById('fore'), foreValEl=document.getElementById('foreVal');
+  const mistakeTabs=document.getElementById('mistakeTabs'), tabBest=document.getElementById('tabBest'), tabThreats=document.getElementById('tabThreats'), tabUndo=document.getElementById('tabUndo');
+  const cssv=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
   let state, selected, legalForSel, lastMove, history, sanHistory, busy, gameOver, forecastShown;
+  let mode='play', displayPos=null, threatCells=null, lastPlayerPre=null, lastPlayerMove=null, lastGrade=null;
 
   const currentElo = () => parseInt(eloEl.value,10);
 
   function reset() {
     state=newState(); selected=null; legalForSel=[]; lastMove=null; history=[]; sanHistory=[]; busy=false; gameOver=false; forecastShown=false;
-    overlay.classList.add('hidden'); clearForecast();
+    lastPlayerPre=null; lastPlayerMove=null; lastGrade=null;
+    clearBoardOverlays(); overlay.classList.add('hidden'); clearForecast(); hideMistakeTabs();
     faceEl.textContent='🙂'; qualityEl.textContent='Ready'; qualityEl.style.color='var(--ink)'; qualitySubEl.textContent='Make your move';
     openingEl.textContent='—';
     render(); setStatus('Your move. You are White.');
@@ -441,17 +460,19 @@
   function setStatus(t){ statusEl.innerHTML=t; }
 
   function render() {
+    const pos = displayPos || state;
     boardEl.innerHTML='';
-    const checkSq = inCheck(state,state.turn) ? findKing(state.board,state.turn) : null;
+    const interactive = !displayPos;
+    const checkSq = inCheck(pos,pos.turn) ? findKing(pos.board,pos.turn) : null;
     for(let r=0;r<8;r++)for(let c=0;c<8;c++){
       const sq=document.createElement('div');
       sq.className='sq '+((r+c)%2===0?'light':'dark'); sq.dataset.r=r; sq.dataset.c=c;
-      if(selected&&selected[0]===r&&selected[1]===c) sq.classList.add('sel');
-      if(lastMove&&((lastMove.from[0]===r&&lastMove.from[1]===c)||(lastMove.to[0]===r&&lastMove.to[1]===c))) sq.classList.add('last');
+      if(interactive&&selected&&selected[0]===r&&selected[1]===c) sq.classList.add('sel');
+      if(interactive&&lastMove&&((lastMove.from[0]===r&&lastMove.from[1]===c)||(lastMove.to[0]===r&&lastMove.to[1]===c))) sq.classList.add('last');
       if(checkSq&&checkSq[0]===r&&checkSq[1]===c) sq.classList.add('check');
-      const mv=legalForSel.find(m=>m.to[0]===r&&m.to[1]===c);
-      if(mv){ sq.classList.add('dot'); if(state.board[r][c]||mv.ep) sq.classList.add('capture'); }
-      const p=state.board[r][c];
+      if(interactive){ const mv=legalForSel.find(m=>m.to[0]===r&&m.to[1]===c); if(mv){ sq.classList.add('dot'); if(pos.board[r][c]||mv.ep) sq.classList.add('capture'); } }
+      if(threatCells){ const o=threatCells[r+','+c]; if(o!=null){ const ov=document.createElement('div'); ov.className='threat-ov'; ov.style.background='rgba(240,190,20,'+o+')'; sq.appendChild(ov); } }
+      const p=pos.board[r][c];
       if(p){ const s=document.createElement('span'); s.className='piece '+colorOf(p); s.textContent=GLYPH[typeOf(p)]; sq.appendChild(s); }
       if(c===0){ const l=document.createElement('span'); l.className='coord rank'; l.textContent=8-r; sq.appendChild(l); }
       if(r===7){ const l=document.createElement('span'); l.className='coord file'; l.textContent=FILES[c]; sq.appendChild(l); }
@@ -478,9 +499,18 @@
 
   // ---- forecast (predicted line) : console list + board arrows ----
   const SVGNS='http://www.w3.org/2000/svg';
-  function clearForecast(){ arrowsEl.innerHTML=''; fcListEl.innerHTML=''; fcSubEl.style.display=''; forecastShown=false; }
+  function clearForecast(){ fcListEl.innerHTML=''; fcSubEl.style.display=''; forecastShown=false; }
+  function clearBoardOverlays(){ arrowsEl.innerHTML=''; threatCells=null; displayPos=null; mode='play'; }
+  function hideMistakeTabs(){ mistakeTabs.style.display='none'; }
+  function updateMistakeTabs(grade){
+    if(grade.loss>MISTAKE_TH){ mistakeTabs.style.display='flex'; tabBest.disabled=grade.loss<=15; }
+    else mistakeTabs.style.display='none';
+  }
+
+  // ---- forecast: predicted continuation line (driven live by the depth slider) ----
   function showForecast() {
-    if (busy||gameOver) return;
+    if (busy) return;
+    clearBoardOverlays(); render();
     forecastShown=true; fcSubEl.style.display='none';
     fcListEl.innerHTML='<div class="empty">Calculating…</div>';
     setTimeout(()=>{
@@ -488,37 +518,93 @@
       const depth=Math.max(2, eloParams(currentElo()).depth);
       const line=forecast(state, n, depth);
       renderForecast(line);
-      drawArrows(line.slice(0,3).map(x=>x.move));
+      drawArrows(line.slice(0,3).map((x,i)=>({move:x.move, color:cssv(['--a1','--a2','--a3'][i]), label:String(i+1)})));
     },20);
   }
   function renderForecast(line) {
     fcListEl.innerHTML='';
     if(!line.length){ fcListEl.innerHTML='<div class="empty">No moves to predict — game over.</div>'; return; }
+    const head=document.createElement('div'); head.className='rev muted';
+    head.textContent='Looking '+line.length+' move'+(line.length>1?'s':'')+' ahead:';
+    fcListEl.appendChild(head);
     line.forEach((step,i)=>{
       const you=step.side==='w';
       const row=document.createElement('div'); row.className='fc-row '+(you?'you':'bot');
       const badge = i<3 ? 'badge b'+(i+1) : 'badge plain';
-      row.innerHTML = `<span class="${badge}">${i+1}</span><span class="fc-who">${you?'You':'Bot'}</span><span class="fc-mv">${step.san}</span>`;
+      row.innerHTML = '<span class="'+badge+'">'+(i+1)+'</span><span class="fc-who">'+(you?'You':'Bot')+'</span><span class="fc-mv">'+step.san+'</span>';
       fcListEl.appendChild(row);
     });
   }
-  function drawArrows(moves) {
+
+  // ---- mistake help: best previous move (reviews the pre-move position) ----
+  function showBestPrevious() {
+    if(!lastPlayerPre||!lastPlayerMove) return;
+    clearBoardOverlays();
+    mode='review'; displayPos=lastPlayerPre; render();
+    const best=bestMoveFor(lastPlayerPre, ANALYSIS_DEPTH);
+    const items=[];
+    if(best) items.push({move:best, color:cssv('--green-ink'), label:'✓'});
+    items.push({move:lastPlayerMove, color:'#8a94a0', label:'✗'});
+    drawArrows(items);
+    const bestSan=best?toSAN(lastPlayerPre,best):'—', youSan=toSAN(lastPlayerPre,lastPlayerMove);
+    fcSubEl.style.display='none';
+    fcListEl.innerHTML='<div class="rev"><span style="color:var(--green-ink);font-weight:700">✓ Best was '+bestSan+'</span></div>'+
+      '<div class="rev"><span style="color:#8a94a0;font-weight:700">✗ You played '+youSan+'</span></div>'+
+      '<div class="rev muted">Green = the move you missed. Click the board to return.</div>';
+    setStatus('Reviewing your last move — click the board to return.');
+  }
+  function exitReview() { clearBoardOverlays(); render(); setStatus(state.turn==='w'?'Your move.':'Computer is thinking…'); }
+
+  // ---- mistake help: threats (yellow highlights + the line that punishes you) ----
+  function computeThreats(pos) {
+    const cells={}, list=[]; let maxSev=0;
+    for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+      const p=pos.board[r][c]; if(!p||colorOf(p)!=='w') continue;
+      if(isAttacked(pos.board,r,c,'b')){
+        const defended=isAttacked(pos.board,r,c,'w');
+        const val=typeOf(p)==='k'?1200:VALUE[typeOf(p)];
+        const sev=val*(defended?0.4:1);
+        cells[r+','+c]=sev; if(sev>maxSev)maxSev=sev;
+        list.push({r,c,type:typeOf(p),defended,sev});
+      }
+    }
+    const op={}; for(const k in cells) op[k]=maxSev?0.35+0.55*(cells[k]/maxSev):0.6;
+    list.sort((a,b)=>b.sev-a.sev);
+    return {cells:op, list};
+  }
+  function showThreats() {
+    clearBoardOverlays();
+    const {cells,list}=computeThreats(state);
+    threatCells=cells; render();
+    fcSubEl.style.display='none';
+    fcListEl.innerHTML='<div class="empty">Calculating…</div>';
+    setStatus('Highlighting the threats to your position.');
+    setTimeout(()=>{
+      const line=forecast(state, 10, ANALYSIS_DEPTH);
+      let html = list.length
+        ? '<div class="rev" style="color:#b5872a;font-weight:700">⚠ Under attack: '+list.map(t=>PNAME[t.type]+' '+sqName([t.r,t.c])+(t.defended?'':' (undefended)')).join(', ')+'</div>'
+        : '<div class="rev muted">No pieces are directly under attack right now.</div>';
+      html+='<div class="rev muted">If best play continues:</div>';
+      line.forEach((s,i)=>{ const you=s.side==='w'; const badge=i<3?'badge b'+(i+1):'badge plain'; html+='<div class="fc-row '+(you?'you':'bot')+'"><span class="'+badge+'">'+(i+1)+'</span><span class="fc-who">'+(you?'You':'Bot')+'</span><span class="fc-mv">'+s.san+'</span></div>'; });
+      fcListEl.innerHTML=html;
+      drawArrows(line.slice(0,3).map((x,i)=>({move:x.move, color:cssv(['--a1','--a2','--a3'][i]), label:String(i+1)})));
+    },20);
+  }
+  function drawArrows(items) {
     arrowsEl.innerHTML='';
-    const cssv=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
     const defs=document.createElementNS(SVGNS,'defs');
-    ['--a1','--a2','--a3'].forEach((v,i)=>{
+    items.forEach((it,i)=>{
       const mk=document.createElementNS(SVGNS,'marker');
       mk.setAttribute('id','ah'+i); mk.setAttribute('markerUnits','userSpaceOnUse');
       mk.setAttribute('markerWidth','0.5'); mk.setAttribute('markerHeight','0.5');
       mk.setAttribute('refX','0.25'); mk.setAttribute('refY','0.25'); mk.setAttribute('orient','auto');
       const path=document.createElementNS(SVGNS,'path');
-      path.setAttribute('d','M0,0 L0.5,0.25 L0,0.5 Z'); path.setAttribute('fill',cssv(v));
+      path.setAttribute('d','M0,0 L0.5,0.25 L0,0.5 Z'); path.setAttribute('fill',it.color);
       mk.appendChild(path); defs.appendChild(mk);
     });
     arrowsEl.appendChild(defs);
-    const cols=['--a1','--a2','--a3'];
-    moves.forEach((m,i)=>{
-      const col=cssv(cols[i]);
+    items.forEach((it,i)=>{
+      const col=it.color, m=it.move;
       const [r1,c1]=m.from,[r2,c2]=m.to;
       let x1=c1+0.5,y1=r1+0.5,x2=c2+0.5,y2=r2+0.5;
       const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy)||1, ux=dx/len,uy=dy/len;
@@ -535,14 +621,15 @@
       arrowsEl.appendChild(circ);
       const txt=document.createElementNS(SVGNS,'text');
       txt.setAttribute('x',bx); txt.setAttribute('y',by); txt.setAttribute('text-anchor','middle');
-      txt.setAttribute('dominant-baseline','central'); txt.setAttribute('font-size','0.26'); txt.setAttribute('font-weight','800'); txt.setAttribute('fill','#2c3440');
-      txt.textContent=i+1; arrowsEl.appendChild(txt);
+      txt.setAttribute('dominant-baseline','central'); txt.setAttribute('font-size','0.24'); txt.setAttribute('font-weight','800'); txt.setAttribute('fill','#2c3440');
+      txt.textContent=it.label; arrowsEl.appendChild(txt);
     });
   }
 
   function onSquareClick(r,c) {
+    if (mode==='review'){ exitReview(); return; }        // click returns from the review board
     if (busy||gameOver||state.turn!=='w') return;
-    clearForecast();
+    if (threatCells||arrowsEl.childNodes.length){ arrowsEl.innerHTML=''; threatCells=null; }  // dismiss overlays
     const p=state.board[r][c];
     if (selected) { const mv=legalForSel.find(m=>m.to[0]===r&&m.to[1]===c); if(mv){ doMove(mv); return; } }
     if (p&&colorOf(p)==='w'){ selected=[r,c]; legalForSel=legalMoves(state).filter(m=>m.from[0]===r&&m.from[1]===c); render(); }
@@ -552,11 +639,15 @@
   function doMove(mv) {
     const pre=cloneState(state);
     history.push(pre); sanHistory.push(toSAN(pre,mv));
-    state=applyMove(state,mv); lastMove=mv; selected=null; legalForSel=[]; clearForecast();
+    state=applyMove(state,mv); lastMove=mv; selected=null; legalForSel=[];
+    clearBoardOverlays(); clearForecast(); hideMistakeTabs();
     render(); refreshOpening();
     busy=true; setStatus('Checking your move…');
     setTimeout(()=>{
-      showQuality(gradeMove(pre,mv,GRADE_DEPTH));
+      const grade=gradeMove(pre,mv,GRADE_DEPTH);
+      showQuality(grade);
+      lastPlayerPre=pre; lastPlayerMove=mv; lastGrade=grade;
+      updateMistakeTabs(grade);
       if (checkEnd('w')) { busy=false; return; }
       setStatus('Computer is thinking…');
       setTimeout(()=>{
@@ -589,7 +680,9 @@
     state=history.pop();
     if (state.turn==='b'&&history.length>0) state=history.pop();
     sanHistory.length=history.length;
-    selected=null; legalForSel=[]; lastMove=null; gameOver=false; clearForecast();
+    selected=null; legalForSel=[]; lastMove=null; gameOver=false;
+    lastPlayerPre=null; lastPlayerMove=null; lastGrade=null;
+    clearBoardOverlays(); clearForecast(); hideMistakeTabs();
     overlay.classList.add('hidden');
     faceEl.textContent='🙂'; qualityEl.textContent='Ready'; qualityEl.style.color='var(--ink)'; qualitySubEl.textContent='Make your move';
     render(); refreshOpening(); setStatus('Move undone. Your move.');
@@ -601,8 +694,11 @@
   document.getElementById('ovBtn').addEventListener('click',reset);
   document.getElementById('undo').addEventListener('click',undo);
   document.getElementById('forecast').addEventListener('click',showForecast);
+  tabBest.addEventListener('click',showBestPrevious);
+  tabThreats.addEventListener('click',showThreats);
+  tabUndo.addEventListener('click',undo);
   eloEl.addEventListener('input',()=>{ eloValEl.textContent=eloEl.value; eloTierEl.textContent=eloTier(currentElo()); });
-  foreEl.addEventListener('input',()=>{ foreValEl.textContent=foreEl.value; if(forecastShown) showForecast(); });
+  foreEl.addEventListener('input',()=>{ foreValEl.textContent=foreEl.value; if(!busy) showForecast(); });
 
   eloValEl.textContent=eloEl.value; eloTierEl.textContent=eloTier(currentElo()); foreValEl.textContent=foreEl.value;
   reset();
