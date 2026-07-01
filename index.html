@@ -443,6 +443,7 @@
   const foreEl=document.getElementById('fore'), foreValEl=document.getElementById('foreVal');
   const mistakeTabs=document.getElementById('mistakeTabs'), tabBest=document.getElementById('tabBest'), tabThreats=document.getElementById('tabThreats'), tabUndo=document.getElementById('tabUndo');
   const cssv=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const arrowColor=i=>'hsl('+((i*36)%360)+',68%,52%)';   // distinct hue per forecast step (1..10)
 
   let state, selected, legalForSel, lastMove, history, sanHistory, busy, gameOver, forecastShown;
   let mode='play', displayPos=null, threatCells=null, lastPlayerPre=null, lastPlayerMove=null, lastGrade=null;
@@ -518,7 +519,7 @@
       const depth=Math.max(2, eloParams(currentElo()).depth);
       const line=forecast(state, n, depth);
       renderForecast(line);
-      drawArrows(line.slice(0,3).map((x,i)=>({move:x.move, color:cssv(['--a1','--a2','--a3'][i]), label:String(i+1)})));
+      drawArrows(line.map((x,i)=>({move:x.move, color:arrowColor(i), label:String(i+1)})));
     },20);
   }
   function renderForecast(line) {
@@ -530,8 +531,7 @@
     line.forEach((step,i)=>{
       const you=step.side==='w';
       const row=document.createElement('div'); row.className='fc-row '+(you?'you':'bot');
-      const badge = i<3 ? 'badge b'+(i+1) : 'badge plain';
-      row.innerHTML = '<span class="'+badge+'">'+(i+1)+'</span><span class="fc-who">'+(you?'You':'Bot')+'</span><span class="fc-mv">'+step.san+'</span>';
+      row.innerHTML = '<span class="badge" style="background:'+arrowColor(i)+'">'+(i+1)+'</span><span class="fc-who">'+(you?'You':'Bot')+'</span><span class="fc-mv">'+step.san+'</span>';
       fcListEl.appendChild(row);
     });
   }
@@ -585,9 +585,9 @@
         ? '<div class="rev" style="color:#b5872a;font-weight:700">⚠ Under attack: '+list.map(t=>PNAME[t.type]+' '+sqName([t.r,t.c])+(t.defended?'':' (undefended)')).join(', ')+'</div>'
         : '<div class="rev muted">No pieces are directly under attack right now.</div>';
       html+='<div class="rev muted">If best play continues:</div>';
-      line.forEach((s,i)=>{ const you=s.side==='w'; const badge=i<3?'badge b'+(i+1):'badge plain'; html+='<div class="fc-row '+(you?'you':'bot')+'"><span class="'+badge+'">'+(i+1)+'</span><span class="fc-who">'+(you?'You':'Bot')+'</span><span class="fc-mv">'+s.san+'</span></div>'; });
+      line.forEach((s,i)=>{ const you=s.side==='w'; html+='<div class="fc-row '+(you?'you':'bot')+'"><span class="badge" style="background:'+arrowColor(i)+'">'+(i+1)+'</span><span class="fc-who">'+(you?'You':'Bot')+'</span><span class="fc-mv">'+s.san+'</span></div>'; });
       fcListEl.innerHTML=html;
-      drawArrows(line.slice(0,3).map((x,i)=>({move:x.move, color:cssv(['--a1','--a2','--a3'][i]), label:String(i+1)})));
+      drawArrows(line.map((x,i)=>({move:x.move, color:arrowColor(i), label:String(i+1)})));
     },20);
   }
   function drawArrows(items) {
